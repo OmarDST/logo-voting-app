@@ -419,6 +419,42 @@ const closeZoom = () => {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    transition: text-overflow 0.3s ease;
+  }
+
+  .logo-card:hover .card-title {
+    text-overflow: clip;
+    animation: marquee 8s linear infinite;
+  }
+
+  @keyframes marquee {
+    0% {
+      transform: translateX(0);
+    }
+    50% {
+      transform: translateX(calc(-100% + 100vw - 2.5rem));
+    }
+    100% {
+      transform: translateX(0);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .logo-card:hover .card-title {
+      animation: marquee-mobile 6s linear infinite;
+    }
+  }
+
+  @keyframes marquee-mobile {
+    0% {
+      transform: translateX(0);
+    }
+    50% {
+      transform: translateX(calc(-100% + 100vw - 1.5rem));
+    }
+    100% {
+      transform: translateX(0);
+    }
   }
 
   /* Delete Modal */

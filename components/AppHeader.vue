@@ -126,6 +126,7 @@ const handleSignOut = async () => {
   justify-content: space-between;
   height: 68px;
   gap: 1rem;
+  min-width: 0;
 }
 
 .header-brand {
@@ -133,6 +134,7 @@ const handleSignOut = async () => {
   align-items: center;
   gap: 0.875rem;
   flex-shrink: 0;
+  min-width: 0;
 }
 
 .brand-icon {
@@ -150,6 +152,9 @@ const handleSignOut = async () => {
   color: var(--color-primary-dark);
   line-height: 1.2;
   letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .brand-sub {
@@ -162,6 +167,8 @@ const handleSignOut = async () => {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  flex-shrink: 0;
+  min-width: 0;
 }
 
 .user-chip {
@@ -173,6 +180,8 @@ const handleSignOut = async () => {
   border-radius: var(--radius-full);
   padding: 0.25rem 0.75rem 0.25rem 0.25rem;
   backdrop-filter: blur(8px);
+  min-width: 0;
+  max-width: 200px;
 }
 
 .user-avatar {
@@ -180,6 +189,7 @@ const handleSignOut = async () => {
   height: 28px;
   border-radius: 50%;
   object-fit: cover;
+  flex-shrink: 0;
 }
 
 .user-avatar-fallback {
@@ -193,6 +203,7 @@ const handleSignOut = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .user-name {
@@ -217,20 +228,80 @@ const handleSignOut = async () => {
   height: 24px;
   border-radius: 50%;
   transition: all var(--transition-fast);
-}
-
-.btn-icon:hover {
-  color: var(--color-primary);
-  background: var(--color-bg-alt);
+  flex-shrink: 0;
 }
 
 @media (max-width: 480px) {
+  .header-inner {
+    gap: 0.5rem;
+  }
+
+  .header-brand {
+    gap: 0.5rem;
+  }
+
+  .brand-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+  }
+
+  .brand-title {
+    font-size: 1rem;
+  }
+
   .brand-sub {
     display: none;
   }
 
+  .header-actions {
+    gap: 0.5rem;
+  }
+
+  .user-chip {
+    max-width: 140px;
+    padding: 0.25rem 0.5rem 0.25rem 0.25rem;
+    gap: 0.375rem;
+  }
+
+  .user-avatar,
+  .user-avatar-fallback {
+    width: 24px;
+    height: 24px;
+  }
+
+  .user-avatar-fallback {
+    font-size: 0.6875rem;
+  }
+
   .user-name {
     max-width: 80px;
+    font-size: 0.8125rem;
+  }
+
+  .btn-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8125rem;
+  }
+
+  .btn-sm svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+@media (max-width: 360px) {
+  .user-chip {
+    max-width: 100px;
+  }
+
+  .user-name {
+    max-width: 50px;
   }
 }
 </style>

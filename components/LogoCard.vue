@@ -4,7 +4,7 @@
     :class="{ voted: hasVotedForThis, expired: isExpired }"
   >
     <!-- Logo Image -->
-    <div class="card-image-wrap">
+    <div class="card-image-wrap" @click="openZoom">
       <img
         :src="logo.imageUrl"
         :alt="logo.title"
@@ -13,6 +13,12 @@
         @error="handleImageError"
       />
       <div class="card-image-overlay" />
+      <div class="zoom-hint" v-if="!isExpired">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M23 23l-5.5-5.5"/>
+          <circle cx="11" cy="11" r="8"/>
+        </svg>
+      </div>
 
       <!-- Vote Count Badge -->
       <div class="vote-badge" :class="{ active: logo.votes.length > 0 }">
@@ -46,6 +52,27 @@
         </button>
       </div>
     </div>
+
+    <!-- Zoom Modal -->
+    <Teleport to="body">
+      <Transition name="zoom">
+        <div v-if="showZoom" class="zoom-overlay" @click.self="closeZoom" @keydown.esc="closeZoom">
+          <div class="zoom-content" @click.stop>
+            <button class="zoom-close" @click="closeZoom" aria-label="Close">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+            <img :src="logo.imageUrl" :alt="logo.title" class="zoom-image" />
+            <div class="zoom-info">
+              <h3>{{ logo.title }}</h3>
+              <p>by {{ logo.uploaderName }}</p>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
 
     <!-- Card Body -->
     <div class="card-body">
@@ -157,6 +184,7 @@ const editTitle = ref('')
 const editInput = ref<HTMLInputElement | null>(null)
 const showDeleteConfirm = ref(false)
 const deleting = ref(false)
+const showZoom = ref(false)
 
 const hasVotedForThis = computed(() => hasVoted(props.logo))
 
@@ -221,6 +249,16 @@ const handleVote = async () => {
 const handleImageError = (e: Event) => {
   const img = e.target as HTMLImageElement
   img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"%3E%3Crect fill="%23EDE9FE" width="400" height="300"/%3E%3Ctext fill="%237C3AED" font-family="Inter,sans-serif" font-size="16" text-anchor="middle" x="200" y="155"%3EImage not available%3C/text%3E%3C/svg%3E'
+}
+
+const openZoom = () => {
+  showZoom.value = true
+  document.body.style.overflow = 'hidden'
+}
+
+const closeZoom = () => {
+  showZoom.value = false
+  document.body.style.overflow = ''
 }
 </script>
 
@@ -537,7 +575,121 @@ const handleImageError = (e: Event) => {
 }
 
 .vote-hint.expired {
-  color: #EF4444;
-  font-weight: 500;
-}
+    color: #EF4444;
+    font-weight: 500;
+  }
+
+  /* Zoom Hint */
+  .zoom-hint {
+    position: absolute;
+    bottom: 0.75rem;
+    right: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-full);
+    background: rgba(30, 27, 75, 0.7);
+    backdrop-filter: blur(8px);
+    color: white;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: all var(--transition-base);
+  }
+
+  .logo-card:hover .zoom-hint {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Zoom Modal */
+  .zoom-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1.5rem;
+  }
+
+  .zoom-overlay-enter-active,
+  .zoom-overlay-leave-active {
+    transition: opacity 0.25s ease;
+  }
+
+  .zoom-overlay-enter-from,
+  .zoom-overlay-leave-to {
+    opacity: 0;
+  }
+
+  .zoom-content {
+    position: relative;
+    max-width: 90vw;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .zoom-content-enter-active,
+  .zoom-content-leave-active {
+    transition: transform 0.25s ease, opacity 0.25s ease;
+  }
+
+  .zoom-content-enter-from,
+  .zoom-content-leave-to {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+
+  .zoom-image {
+    max-width: 100%;
+    max-height: 75vh;
+    object-fit: contain;
+    border-radius: var(--radius-md);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  }
+
+  .zoom-info {
+    text-align: center;
+    color: white;
+  }
+
+  .zoom-info h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+  }
+
+  .zoom-info p {
+    font-size: 0.9375rem;
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .zoom-close {
+    position: absolute;
+    top: -3.5rem;
+    right: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+  }
+
+  .zoom-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: rotate(90deg);
+  }
 </style>

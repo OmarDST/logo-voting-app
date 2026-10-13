@@ -12,11 +12,12 @@ export const useAuth = () => {
   const signIn = async () => {
     authError.value = null
     try {
-      const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1'
-      const redirectTo = isProduction
-        ? 'https://omardst.github.io/logo-voting-app/auth/callback'
-        : `${window.location.origin}/auth/callback`
-      
+      const baseURL = useRuntimeConfig().app.baseURL || '/'
+      const redirectTo = new URL(
+        'auth/callback',
+        `${window.location.origin}${baseURL.endsWith('/') ? baseURL : `${baseURL}/`}`,
+      ).href
+
       console.log('Sign in redirectTo:', redirectTo)
       
       const { error } = await $supabase.auth.signInWithOAuth({

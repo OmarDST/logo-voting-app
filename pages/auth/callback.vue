@@ -9,10 +9,28 @@
 
 <script setup lang="ts">
 const { $supabase } = useNuxtApp()
-const router = useRouter()
 
-await $supabase.auth.getSession()
-router.push('/')
+// OAuth implicit flow returns tokens in the URL hash; wait for the client to consume them.
+if (import.meta.client && window.location.hash.includes('access_token')) {
+  await new Promise<void>((resolve) => {
+    const { data: { subscription } } = $supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN') {
+        subscription.unsubscribe()
+        resolve()
+      }
+    })
+    void $supabase.auth.getSession().then(({ data }) => {
+      if (data.session) {
+        subscription.unsubscribe()
+        resolve()
+      }
+    })
+  })
+} else {
+  await $supabase.auth.getSession()
+}
+
+await navigateTo('/')
 </script>
 
 <style scoped>

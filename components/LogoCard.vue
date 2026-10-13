@@ -416,6 +416,9 @@ const closeZoom = () => {
     color: var(--color-text-primary);
     letter-spacing: -0.01em;
     line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   /* Delete Modal */

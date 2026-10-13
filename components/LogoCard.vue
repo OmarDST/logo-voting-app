@@ -21,8 +21,11 @@
       </div>
 
       <!-- Vote Count Badge -->
-      <div class="vote-badge" :class="{ active: logo.votes.length > 0 }">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+      <div class="vote-badge" :class="{ active: logo.votes.length > 0, top: isTopVoted }">
+        <svg v-if="isTopVoted" class="crown-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        </svg>
+        <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/>
         </svg>
         {{ logo.votes.length }}
@@ -32,7 +35,7 @@
       <div v-if="isOwner" class="card-actions">
         <button
           class="action-btn edit-btn"
-          @click="openEdit"
+          @click.stop="openEdit"
           title="Edit title"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -42,7 +45,7 @@
         </button>
         <button
           class="action-btn delete-btn"
-          @click="confirmDelete"
+          @click.stop="confirmDelete"
           title="Delete logo"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -175,7 +178,7 @@ const props = defineProps<{
 }>()
 
 const { isAuthenticated, isDSTUser, user } = useAuth()
-const { toggleVote, hasVoted, updateLogo, deleteLogo } = useLogos()
+const { toggleVote, hasVoted, updateLogo, deleteLogo, sortedLogos } = useLogos()
 const { isExpired } = useCountdown()
 
 const voting = ref(false)
@@ -190,6 +193,15 @@ const hasVotedForThis = computed(() => hasVoted(props.logo))
 
 const isOwner = computed(() => {
   return user.value?.id === props.logo.uploaderUid
+})
+
+const maxVotes = computed(() => {
+  if (!sortedLogos.value.length) return 0
+  return Math.max(...sortedLogos.value.map(l => l.votes.length))
+})
+
+const isTopVoted = computed(() => {
+  return props.logo.votes.length > 0 && props.logo.votes.length === maxVotes.value
 })
 
 const uploaderInitial = computed(() => props.logo.uploaderName?.[0]?.toUpperCase() ?? '?')
@@ -330,6 +342,22 @@ const closeZoom = () => {
   .vote-badge.active {
     background: rgba(132, 204, 22, 0.85);
     color: var(--color-text-on-accent);
+  }
+
+  .vote-badge.top {
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    color: #1a1a2e;
+    border-color: rgba(255, 215, 0, 0.5);
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+  }
+
+  .vote-badge.top .crown-icon {
+    animation: crown-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes crown-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
   }
 
   /* Owner Actions */

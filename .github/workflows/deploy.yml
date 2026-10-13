@@ -25,6 +25,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Clear Nuxt cache
+        run: rm -rf .nuxt .output node_modules/.cache
+
       - name: Generate static site
         run: npm run generate
         env:

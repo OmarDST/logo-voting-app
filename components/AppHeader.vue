@@ -16,7 +16,7 @@
           </svg>
         </div>
         <div>
-          <h1 class="brand-title">DST Logo Vote</h1>
+          <h1 class="brand-title">DST Platform Logo Vote</h1>
           <p class="brand-sub">Choose your favourite design</p>
         </div>
       </div>
@@ -41,9 +41,9 @@
             </button>
             <div class="user-chip">
               <img
-                v-if="user?.photoURL"
-                :src="user.photoURL"
-                :alt="user.displayName ?? 'User'"
+                v-if="avatarUrl"
+                :src="avatarUrl"
+                :alt="displayName"
                 class="user-avatar"
               />
               <div v-else class="user-avatar-fallback">
@@ -97,11 +97,11 @@ defineEmits<{
   'sign-in': []
 }>()
 
-const { user, isAuthenticated, isDSTUser, authLoading, signOut } = useAuth()
+const { user, isAuthenticated, isDSTUser, authLoading, signOut, displayName, avatarUrl } = useAuth()
 const { isExpired } = useCountdown()
 
-const userInitial = computed(() => user.value?.displayName?.[0]?.toUpperCase() ?? '?')
-const userFirstName = computed(() => user.value?.displayName?.split(' ')[0] ?? 'User')
+const userInitial = computed(() => displayName.value?.[0]?.toUpperCase() ?? '?')
+const userFirstName = computed(() => displayName.value?.split(' ')[0] ?? 'User')
 
 const handleSignOut = async () => {
   await signOut()
@@ -199,6 +199,10 @@ const handleSignOut = async () => {
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
 }
 
 .btn-icon {
@@ -226,7 +230,7 @@ const handleSignOut = async () => {
   }
 
   .user-name {
-    display: none;
+    max-width: 80px;
   }
 }
 </style>

@@ -20,7 +20,7 @@
               </div>
             </div>
 
-            <h2 id="auth-modal-title" class="auth-title">Sign in to DST Logo Vote</h2>
+            <h2 id="auth-modal-title" class="auth-title">Sign in to DST Platform Logo Vote</h2>
             <p class="auth-subtitle">
               Use your <strong>@dst.com.bn</strong> Google account to upload logos and cast votes.
             </p>

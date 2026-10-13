@@ -21,12 +21,48 @@
         </svg>
         {{ logo.votes.length }}
       </div>
+
+      <!-- Owner Actions -->
+      <div v-if="isOwner" class="card-actions">
+        <button
+          class="action-btn edit-btn"
+          @click="openEdit"
+          title="Edit title"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+        </button>
+        <button
+          class="action-btn delete-btn"
+          @click="confirmDelete"
+          title="Delete logo"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+          </svg>
+        </button>
+      </div>
     </div>
 
     <!-- Card Body -->
     <div class="card-body">
-      <!-- Logo Title -->
-      <h3 class="card-title">{{ logo.title }}</h3>
+      <!-- Logo Title (editable) -->
+      <div class="title-row">
+        <h3 class="card-title" v-if="!editing">{{ logo.title }}</h3>
+        <div v-else class="edit-title">
+          <input
+            v-model="editTitle"
+            @keyup.enter="saveEdit"
+            @blur="saveEdit"
+            class="edit-input"
+            ref="editInput"
+            maxlength="80"
+          />
+        </div>
+      </div>
 
       <!-- Uploader info -->
       <div class="uploader-row">
@@ -77,34 +113,100 @@
         Voting closed
       </p>
     </div>
+
+    <!-- Delete Confirmation Modal -->
+    <Teleport to="body">
+      <Transition name="fade">
+        <div v-if="showDeleteConfirm" class="modal-overlay" @click.self="showDeleteConfirm = false">
+          <Transition name="slide-up">
+            <div class="modal-panel delete-panel" role="dialog" aria-modal="true">
+              <div class="modal-header">
+                <h3 class="modal-title">Delete Logo</h3>
+              </div>
+              <p class="delete-msg">Are you sure you want to delete "<strong>{{ logo.title }}</strong>"? This cannot be undone.</p>
+              <div class="modal-actions">
+                <button class="btn btn-ghost" @click="showDeleteConfirm = false">Cancel</button>
+                <button class="btn btn-danger" @click="handleDelete" :disabled="deleting">
+                  <span v-if="deleting">Deleting…</span>
+                  <span v-else>Delete</span>
+                </button>
+              </div>
+            </div>
+          </Transition>
+        </div>
+      </Transition>
+    </Teleport>
   </article>
 </template>
 
 <script setup lang="ts">
 import type { Logo } from '~/composables/useLogos'
+import { ref, computed, nextTick } from 'vue'
 
 const props = defineProps<{
   logo: Logo
 }>()
 
-const { isAuthenticated, isDSTUser } = useAuth()
-const { toggleVote, hasVoted } = useLogos()
+const { isAuthenticated, isDSTUser, user } = useAuth()
+const { toggleVote, hasVoted, updateLogo, deleteLogo } = useLogos()
 const { isExpired } = useCountdown()
 
 const voting = ref(false)
+const editing = ref(false)
+const editTitle = ref('')
+const editInput = ref<HTMLInputElement | null>(null)
+const showDeleteConfirm = ref(false)
+const deleting = ref(false)
 
 const hasVotedForThis = computed(() => hasVoted(props.logo))
+
+const isOwner = computed(() => {
+  return user.value?.id === props.logo.uploaderUid
+})
 
 const uploaderInitial = computed(() => props.logo.uploaderName?.[0]?.toUpperCase() ?? '?')
 
 const formattedDate = computed(() => {
   if (!props.logo.createdAt) return ''
-  return props.logo.createdAt.toLocaleDateString('en-GB', {
+  const date = new Date(props.logo.createdAt)
+  if (isNaN(date.getTime())) return ''
+  return date.toLocaleDateString('en-GB', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
   })
 })
+
+const openEdit = () => {
+  if (!isOwner.value) return
+  editTitle.value = props.logo.title
+  editing.value = true
+  nextTick(() => editInput.value?.focus())
+}
+
+const saveEdit = async () => {
+  if (!editing.value) return
+  const title = editTitle.value.trim()
+  if (!title) return
+  const ok = await updateLogo(props.logo.id, title)
+  if (ok) {
+    editing.value = false
+  }
+}
+
+const confirmDelete = () => {
+  if (!isOwner.value) return
+  showDeleteConfirm.value = true
+}
+
+const handleDelete = async () => {
+  deleting.value = true
+  const ok = await deleteLogo(props.logo.id)
+  if (ok) {
+    showDeleteConfirm.value = false
+  }
+  deleting.value = false
+}
 
 const handleVote = async () => {
   if (voting.value) return
@@ -170,29 +272,143 @@ const handleImageError = (e: Event) => {
 }
 
 /* Vote Badge */
-.vote-badge {
-  position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  background: rgba(30, 27, 75, 0.7);
-  backdrop-filter: blur(8px);
-  color: white;
-  font-size: 0.8125rem;
-  font-weight: 700;
-  padding: 0.25rem 0.6rem;
-  border-radius: var(--radius-full);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-}
+  .vote-badge {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: rgba(30, 27, 75, 0.7);
+    backdrop-filter: blur(8px);
+    color: white;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    padding: 0.25rem 0.6rem;
+    border-radius: var(--radius-full);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
 
-.vote-badge.active {
-  background: rgba(132, 204, 22, 0.85);
-  color: var(--color-text-on-accent);
-}
+  .vote-badge.active {
+    background: rgba(132, 204, 22, 0.85);
+    color: var(--color-text-on-accent);
+  }
 
-/* Card Body */
+  /* Owner Actions */
+  .card-actions {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    display: flex;
+    gap: 0.375rem;
+    opacity: 0;
+    transform: translateX(-8px);
+    transition: all var(--transition-base);
+  }
+
+  .logo-card:hover .card-actions {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .action-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-full);
+    background: var(--color-surface-glass);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(8px);
+    transition: all var(--transition-fast);
+  }
+
+  .action-btn:hover {
+    background: var(--color-bg);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+
+  .delete-btn:hover {
+    background: rgba(220, 38, 38, 0.1);
+    border-color: #DC2626;
+    color: #DC2626;
+  }
+
+  /* Title Row */
+  .title-row {
+    position: relative;
+  }
+
+  .edit-title {
+    width: 100%;
+  }
+
+  .edit-input {
+    width: 100%;
+    padding: 0.375rem 0.625rem;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--color-primary-light);
+    background: var(--color-bg);
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: var(--font-sans);
+    color: var(--color-text-primary);
+    outline: none;
+  }
+
+  .edit-input:focus {
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+  }
+
+  /* Card Body */
+  .card-body {
+    padding: 1rem 1.25rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+  }
+
+  /* Delete Modal */
+  .delete-panel {
+    max-width: 380px;
+  }
+
+  .delete-msg {
+    font-size: 0.9375rem;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+    margin-bottom: 0.5rem;
+  }
+
+  .btn-danger {
+    background: linear-gradient(135deg, #DC2626, #B91C1C);
+    border: none;
+    color: white;
+  }
+
+  .btn-danger:hover:not(:disabled) {
+    background: linear-gradient(135deg, #B91C1C, #991B1B);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);
+  }
+
+  .btn-danger:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  /* Vote Button */
 .card-body {
   padding: 1rem 1.25rem 1.25rem;
   display: flex;

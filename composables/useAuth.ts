@@ -43,6 +43,21 @@ export const useAuth = () => {
     return user.value?.email?.endsWith(ALLOWED_DOMAIN) ?? false
   })
 
+  const displayName = computed(() => {
+    if (!user.value) return 'User'
+    return user.value.user_metadata?.full_name 
+      ?? user.value.user_metadata?.name 
+      ?? user.value.email?.split('@')[0] 
+      ?? 'User'
+  })
+
+  const avatarUrl = computed(() => {
+    if (!user.value) return null
+    return user.value.user_metadata?.avatar_url 
+      ?? user.value.user_metadata?.picture 
+      ?? null
+  })
+
   return {
     user: readonly(user),
     authLoading: readonly(authLoading),
@@ -51,5 +66,7 @@ export const useAuth = () => {
     isDSTUser,
     signIn,
     signOut,
+    displayName,
+    avatarUrl,
   }
 }

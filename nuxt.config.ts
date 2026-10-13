@@ -7,7 +7,7 @@ export default defineNuxtConfig({
     baseURL: '/logo-voting-app/',
     buildAssetsDir: 'assets',
     head: {
-      title: 'DST Logo Voting',
+      title: 'DST Platform Logo Vote',
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
@@ -39,12 +39,8 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      firebaseApiKey: '',
-      firebaseAuthDomain: '',
-      firebaseProjectId: '',
-      firebaseStorageBucket: '',
-      firebaseMessagingSenderId: '',
-      firebaseAppId: '',
+      supabaseUrl: '',
+      supabaseAnonKey: '',
     },
   },
 

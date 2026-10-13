@@ -12,13 +12,20 @@ export const useAuth = () => {
   const signIn = async () => {
     authError.value = null
     try {
+      const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1'
+      const redirectTo = isProduction
+        ? 'https://omardst.github.io/logo-voting-app/auth/callback'
+        : `${window.location.origin}/auth/callback`
+      
+      console.log('Sign in redirectTo:', redirectTo)
+      
       const { error } = await $supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           queryParams: {
             hd: 'dst.com.bn',
           },
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo,
         },
       })
       if (error) {
